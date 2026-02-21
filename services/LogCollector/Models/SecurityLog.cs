@@ -6,4 +6,4 @@ public record SecurityLog(
     string? SourceIp,
     DateTime TImestamp,
     string Severity
-)
+);

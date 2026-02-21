@@ -7,7 +7,7 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.MapPost("/logs", (SecurityLog log) =>{
-    Console.WriteLine($"[log recieved] {log.source} | {log.Severity} | {log.RawMessage}");
+    Console.WriteLine($"[log recieved] {log.Source} | {log.Severity} | {log.RawMessage}");
     return Results.Accepted($"/log/{log.Id}", log);
 });
 

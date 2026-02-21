@@ -1,0 +1,6 @@
+@AlertManager_HostAddress = http://localhost:5059
+
+GET {{AlertManager_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

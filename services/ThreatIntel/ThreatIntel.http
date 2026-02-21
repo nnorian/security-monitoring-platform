@@ -1,0 +1,6 @@
+@ThreatIntel_HostAddress = http://localhost:5188
+
+GET {{ThreatIntel_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

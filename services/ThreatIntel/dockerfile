@@ -11,4 +11,4 @@ WORKDIR /app
 RUN adduser -D appuser
 USER appuser
 COPY --from=build /out .
-ENTRYPOINT ["dotnet", "AlertManager.dll"]
+ENTRYPOINT ["dotnet", "ThreatIntel.dll"]

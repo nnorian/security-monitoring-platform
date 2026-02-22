@@ -8,15 +8,15 @@ services:
       - RABBITMQ_HOST=rabbitmq
       - REDIS_HOST=redis
     depends_on:
-      - rabitmq
+      - rabbitmq
       - redis
 
   alert-manager:
     build: ./services/AlertManager
     ports: 
-      -"5003:8080"
-    environement:
-      - REBBITMQ_HUST=rabbitmq
+      - "5003:8080"
+    environment:
+      - RABBITMQ_HOST=rabbitmq
       - REDIS_HOST=redis
     depends_on:
       - rabbitmq
@@ -26,7 +26,7 @@ services:
     build: ./services/ThreatIntel
     ports:
       - "8004:8080"
-    environement:
+    environment:
       - REDIS_HOST=redis
     depends_on:
       - redis
@@ -41,18 +41,18 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
 
   postgres:
-    image: postgres:16-apline
+    image: postgres:16-alpine
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - pastgres_data:/var/libb/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
 
   redis:
     image: redis:7-alpine
     ports:
-      -"6379:6379"
+      - "6379:6379"
 
 volumes:
   postgres_data:

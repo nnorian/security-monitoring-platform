@@ -14,3 +14,11 @@ app.MapPost("/logs", (SecurityLog log) =>{
 //health check
 app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow}));
 app.Run();
+
+builder.Service.AddSingleton<RabbitMqPublisher>(sp =>
+    new RabbitMqPublisher(builder.Configuration["RABBITMQ_HOST"] ?? "localhost"));
+
+app.MapPost("/logs", async (SecurityLog log, RabbitMqPublisher publisher) =>{
+    await publisher.PublishAsync(log);
+    return Results.Accepted($"/logs/{log.Id}", log);
+});

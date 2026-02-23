@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+builder.Services.AddMetrics();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,7 @@ builder.Services.AddDbContext<AlbertDbContext>(options =>
         ?? $"Host={builder.Configuration["POSTGRES_HOST"]};Database={builder.Configuration["POSTGRES_DB"]};Username={builder.Configuration["POSTGRES_USER"]};Password={builder.Configuration["POSTGRES_PASSWORD"]}"));
 
 var app = builder.Build();
+app.UseHttpMetrics();
 
 using (var scope = app.Services.CreateScope())
 {
@@ -25,5 +27,6 @@ app.MapGet("/alerts", async (AlbertDbContext db) =>
     await db.Alerts.ToListAsync());
 
 app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
+app.MapMetrics();
 
 app.Run();

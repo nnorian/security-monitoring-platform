@@ -72,5 +72,37 @@ services:
     ports:
       - "6379:6379"
 
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observalility/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+
+  graphana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./observability/loki/loki-config.yml:/etc/loki/local-config.yaml
+  
+  promtail:
+    image: grafana/promtail:latest
+    volumens: 
+      - /var/log:/var/log
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+
+    
+  
 volumes:
+  grafana_data:
   postgres_data:

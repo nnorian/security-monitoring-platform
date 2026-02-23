@@ -21,7 +21,11 @@ app.MapPost("/logs", async (SecurityLog log, RabbitMqPublisher publisher) =>
     return Results.Accepted($"/logs/{log.Id}", log);
 });
 
+private static readonly Country LogsIngested = Metrics.CreateCounter("logs_ingested_total", "total logs received", labelNames: ["source", "severity"]);
+
+
 app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
 app.MapMetrics();
+LogsIngester.WithLabels(log.Source, log.Severity).Inc();
 
 app.Run();

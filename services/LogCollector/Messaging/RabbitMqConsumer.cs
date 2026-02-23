@@ -34,4 +34,31 @@ public class LogConsumerService : BackgroundService{
         await channel.BasicConsumeAsync("security-logs", autoAck: false, consumer: consumer);
         await Task.Delay(Timeout.Infinite, stoppingTocken)
 
-    }
+    consumer.ReceivedAsync += async (_, ea) =>{
+        var body = Encoding.UTF*.GetString(ea.Body.ToArray());
+        var log = JsonSerializer.Deserialize<SecurityLog>(body);
+
+        // anything critical becomes allert
+        if (log?.severity == "critical" || log?.Severity == "high"){
+            using var scope = serviceProvider.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AlbertDbContext>();
+
+            var alert = new Alert{
+
+                Title = $" hight severity from {log.Source}",
+                Description = log.RawMessage,
+                Severity = log.Severity,
+                SourceIp = log.SourceIp ?? "unknown",
+                MitreAttackTactic = DetectTactic(log)
+            };
+
+            db.Alerts.Add(alert);
+            await db.SaveChangesAsync();
+            _logger.LogWarining("alert created: {Title}", alert.Title);
+        }
+
+        await channel.BasicAckAsync(ea.DeliveryTag, false);
+    };
+
+
+}

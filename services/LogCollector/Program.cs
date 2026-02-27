@@ -1,4 +1,5 @@
-builder.Services.AddMetrics();
+using Prometheus;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
@@ -15,17 +16,19 @@ app.UseHttpMetrics();
 app.UseSwagger();
 app.UseSwaggerUI();
 
+var logsIngested = Metrics.CreateCounter(
+    "logs_ingested_total",
+    "Total logs received",
+    new CounterConfiguration { LabelNames = ["source", "severity"] });
+
 app.MapPost("/logs", async (SecurityLog log, RabbitMqPublisher publisher) =>
 {
     await publisher.PublishAsync(log);
+    logsIngested.WithLabels(log.Source, log.Severity).Inc();
     return Results.Accepted($"/logs/{log.Id}", log);
 });
 
-private static readonly Country LogsIngested = Metrics.CreateCounter("logs_ingested_total", "total logs received", labelNames: ["source", "severity"]);
-
-
 app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
 app.MapMetrics();
-LogsIngester.WithLabels(log.Source, log.Severity).Inc();
 
 app.Run();

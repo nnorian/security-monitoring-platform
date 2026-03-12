@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-builder.Services.AddMetrics();
+using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddMetrics();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

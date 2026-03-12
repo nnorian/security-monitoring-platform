@@ -1,25 +1,42 @@
-builder.Service.AddMetrics();
+using Prometheus;
+using StackExchange.Redis;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddMetrics();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<IConnectionMultiplexer>(
+    ConnectionMultiplexer.Connect(builder.Configuration["REDIS_HOST"] ?? "localhost"));
+
+var app = builder.Build();
 
 app.UseHttpMetrics();
-app.MapMetrics(); 
+app.UseSwagger();
+app.UseSwaggerUI();
 
 //exposes /metrics endpoint
-builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(builder.Configuration["REDIS_HOST"] ?? "localhost"));
-
-app.MapGet("/threat/check/{ip}", async (string ip, IConnectionMultiplex redis, HttpClient http) =>{
+app.MapGet("/threat/check/{ip}", async (string ip, IConnectionMultiplexer redis, IHttpClientFactory httpFactory) => {
     var db = redis.GetDatabase();
     var cacheKey = $"threat:{ip}";
 
     var cached = await db.StringGetAsync(cacheKey);
     if (cached.HasValue)
-        return Result.Ok(new { ip, fromCache = true, data = cached.ToString() });
-    
+        return Results.Ok(new { ip, fromCache = true, data = cached.ToString() });
+
+    var http = httpFactory.CreateClient();
     var response = await http.GetStringAsync(
-        $"https://api.abuseipbd.com/api/v2/check?ipAddress={ip}"
+        $"https://api.abuseipdb.com/api/v2/check?ipAddress={ip}"
     );
 
     //cache for one hour
-    await db.stringAsync(cacheKey, response, TimeSpan.FromHours(1));
+    await db.StringSetAsync(cacheKey, response, TimeSpan.FromHours(1));
 
-    return Results.Ok(new {ip, fromCache = false, data = response});
-})
+    return Results.Ok(new { ip, fromCache = false, data = response });
+});
+
+app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
+app.MapMetrics();
+
+app.Run();

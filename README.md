@@ -55,6 +55,18 @@ Victim VM (Metasploitable3)
 | **Async / concurrency** | Full `async/await` stack — queue consumer, DB writes, HTTP calls, Redis ops all non-blocking |
 | **Exception handling** | `URLError` caught in the log-shipper; graceful degradation on missing config values |
 
+### SOLID & design patterns
+
+| Principle / Pattern | Where |
+|---|---|
+| **S — Single Responsibility** | Each microservice owns exactly one concern: LogCollector ingests, AlertManager classifies, ThreatIntel enriches — no service crosses those boundaries |
+| **O — Open/Closed** | `LogConsumerService` extends `BackgroundService` to add queue-processing behaviour without modifying the base class |
+| **D — Dependency Inversion** | All dependencies (`ILogger`, `IConfiguration`, `IServiceProvider`) are injected via interfaces; concrete types are resolved by the DI container at runtime, not hardcoded |
+| **Factory pattern** | `ConnectionFactory` creates RabbitMQ connections; `IHttpClientFactory` creates scoped `HttpClient` instances in ThreatIntel |
+| **Facade pattern** | `RabbitMqPublisher` hides AMQP connection management, channel lifecycle, and JSON serialisation behind a single `PublishAsync<T>()` call |
+| **Template Method pattern** | `BackgroundService` defines the execution lifecycle; `LogConsumerService` implements only `ExecuteAsync()` — the framework calls it at the right time |
+| **Repository pattern** | `AlbertDbContext` with `DbSet<Alert>` acts as a typed repository, abstracting SQL from the business logic in `LogConsumerService` |
+
 ### REST API design
 
 - `POST /logs` — accepts `SecurityLog`, publishes to queue, returns `202 Accepted` with resource location header
